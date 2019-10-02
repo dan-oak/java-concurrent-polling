@@ -1,15 +1,15 @@
 package dev.danoak
 
 import dev.danoak.jobs.RandomIntegerPersister
-import dev.danoak.pollers.BooleanPoller
+import dev.danoak.pollers.BooleanLatchedPoller
 import dev.danoak.repositories.ListRepository
 import dev.danoak.repositories.Repository
 
 import static java.util.concurrent.TimeUnit.SECONDS
 
-class BooleanPollerTest extends Test {
+class BooleanLatchedPollerTest extends Test {
 
-    BooleanPoller poller = new BooleanPoller()
+    BooleanLatchedPoller poller = new BooleanLatchedPoller()
 
     def pollForDivisibleBy4IsPresent(Repository<Number> repo) throws InterruptedException {
         def pollee = {
@@ -17,7 +17,7 @@ class BooleanPollerTest extends Test {
                 .map({ log.info("Found: {}", it); it })
                 .isPresent()
         }
-        return poller.poll(pollee, 1, SECONDS, 5, SECONDS)
+        return poller.poll(pollee, 1, SECONDS).await(5, SECONDS)
     }
 
     def "boolean poller"() {
