@@ -1,15 +1,15 @@
-package dev.danoak
+package dev.danoak.pollers
 
+import dev.danoak.Test
 import dev.danoak.jobs.RandomIntegerPersister
-import dev.danoak.pollers.Poller
 import dev.danoak.repositories.ListRepository
 import dev.danoak.repositories.Repository
 
 import static java.util.concurrent.TimeUnit.SECONDS
 
-class PollerTest extends Test {
+class ParameterizedPollerTest extends Test {
 
-    Poller poller = new Poller()
+    def poller = new ParameterizedPoller()
 
     def pollForDivisibleBy4(Repository<Number> repo) throws InterruptedException {
         def pollee = {
@@ -18,7 +18,7 @@ class PollerTest extends Test {
         return poller.poll(pollee, 1, SECONDS, 5, SECONDS)
     }
 
-    def "poller"() {
+    def "parameterized poller"() {
         given:
             def repo = new ListRepository<Integer>()
             def rng = new RandomIntegerPersister(repo)

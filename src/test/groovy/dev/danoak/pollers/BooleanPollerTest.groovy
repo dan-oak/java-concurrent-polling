@@ -1,7 +1,7 @@
-package dev.danoak
+package dev.danoak.pollers
 
+import dev.danoak.Test
 import dev.danoak.jobs.RandomIntegerPersister
-import dev.danoak.pollers.BooleanPoller
 import dev.danoak.repositories.ListRepository
 import dev.danoak.repositories.Repository
 
@@ -9,7 +9,7 @@ import static java.util.concurrent.TimeUnit.SECONDS
 
 class BooleanPollerTest extends Test {
 
-    BooleanPoller poller = new BooleanPoller()
+    def poller = new BooleanPoller()
 
     def pollForDivisibleBy4IsPresent(Repository<Number> repo) throws InterruptedException {
         def pollee = {
