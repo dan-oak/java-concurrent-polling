@@ -20,7 +20,7 @@ class BooleanLatchedPollerTest extends Test {
         return poller.poll(pollee, 1, SECONDS).await(5, SECONDS)
     }
 
-    def "boolean poller"() {
+    def "boolean latched poller"() {
         given:
             def repo = new ListRepository<Integer>()
             def rng = new RandomIntegerPersister(repo)
