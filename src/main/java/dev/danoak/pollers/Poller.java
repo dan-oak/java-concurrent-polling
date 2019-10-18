@@ -1,74 +1,55 @@
 package dev.danoak.pollers;
 
-import dev.danoak.functional.SafeCallable;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
 import java.util.Optional;
 import java.util.concurrent.*;
+import java.util.concurrent.atomic.AtomicReference;
 
-@SuppressWarnings("DuplicatedCode")
-public class Poller<Result> {
+@SuppressWarnings("Duplicates")
+@Slf4j
+public class Poller<Answer> {
 
-    private final Logger log = LoggerFactory.getLogger(this.getClass().getName());
+    @RequiredArgsConstructor
+    private final class QuestionRunnable implements Runnable {
 
-    private final BlockingQueue<Result> resultQueue = new ArrayBlockingQueue<>(1, true);
+        ScheduledFuture<?> scheduledFuture = null;
+        final Callable<Optional<Answer>> question;
+        final AtomicReference<Optional<Answer>> answer;
 
-    private final ScheduledThreadPoolExecutor threadPoolExecutor = new ScheduledThreadPoolExecutor(1);
-
-    private ScheduledFuture<?> future;
-
-    public Optional<Result> poll(SafeCallable<Optional<Result>> pollee,
-                                 int period, TimeUnit periodTimeUnit,
-                                 int timeout, TimeUnit timeoutTimeUnit) {
-        future = threadPoolExecutor.scheduleAtFixedRate(() -> poll(pollee), 0, period, periodTimeUnit);
-        log.info("Started with period of {} {}", period, periodTimeUnit);
-        final Optional<Result> resultOpt = Optional.ofNullable(get(timeout, timeoutTimeUnit));
-        if (resultOpt.isEmpty()) {
-            log.error("Polling timed out");
+        @Override
+        public synchronized void run() {
+            if (answer.get().isPresent()) {
+                if (scheduledFuture != null) {
+                    scheduledFuture.cancel(false);
+                } else {
+                    try { wait(); } catch (InterruptedException e) { }
+                }
+            } else {
+                try { answer.set(question.call()); } catch (Exception e) { }
+            }
         }
-        return resultOpt;
+
+        synchronized void bind(ScheduledFuture<?> scheduledFuture) {
+            this.scheduledFuture = scheduledFuture;
+            notify();
+        }
 
     }
 
-    private void poll(SafeCallable<Optional<Result>> pollee) {
-        final Optional<Result> opt = pollee.call();
-        if (opt.isPresent()) {
-            final Result result = opt.get();
-            log.info("Got {}", result);
-            put(result);
-        } else {
-            log.info("Nothing yet");
-        }
-    }
-
-    private Result get(int timeout, TimeUnit timeoutTimeUnit) {
-        try {
-            return resultQueue.poll(timeout, timeoutTimeUnit);
-        } catch (InterruptedException e) {
-            log.error("Polling error", e);
-            return null;
-        } finally {
-            stop();
-        }
-    }
-
-    private void put(Result result) {
-        try {
-            resultQueue.put(result);
-        } catch (InterruptedException e) {
-            log.error("Polling error", e);
-        } finally {
-            stop();
-        }
-    }
-
-    private void stop() {
-        if (future != null) {
-            future.cancel(true);
-        }
-        threadPoolExecutor.shutdown();
-        log.info("Stopped");
+    public Optional<Answer> poll(Callable<Optional<Answer>> question,
+                                 long period, TimeUnit periodTimeUnit,
+                                 long timeout, TimeUnit timeoutTimeUnit
+    ) throws InterruptedException, ExecutionException, TimeoutException {
+        AtomicReference<Optional<Answer>> resultRef = new AtomicReference<>(Optional.empty());
+        QuestionRunnable questionRunnable = new QuestionRunnable(question, resultRef);
+        ScheduledFuture<?> scheduledFuture = Executors
+            .newSingleThreadScheduledExecutor()
+            .scheduleAtFixedRate(questionRunnable, 0, period, periodTimeUnit);
+        questionRunnable.bind(scheduledFuture);
+        scheduledFuture.get(timeout, timeoutTimeUnit);
+        return resultRef.get();
     }
 
 }

@@ -1,8 +1,7 @@
 package dev.danoak.jobs;
 
 import dev.danoak.repositories.Repository;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.extern.slf4j.Slf4j;
 
 import java.util.Optional;
 import java.util.Random;
@@ -10,9 +9,8 @@ import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
+@Slf4j
 public class RandomIntegerPersister implements Job {
-
-    private final Logger log = LoggerFactory.getLogger(this.getClass().getName());
 
     private final Repository<Integer> repo;
 

@@ -1,16 +1,14 @@
 package dev.danoak.pollers;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.extern.slf4j.Slf4j;
 
 import java.util.concurrent.*;
 
 import static java.util.concurrent.TimeUnit.SECONDS;
 
 @SuppressWarnings("DuplicatedCode")
+@Slf4j
 public class BooleanLatchedPoller {
-
-    private final Logger log = LoggerFactory.getLogger(this.getClass().getName());
 
     private final ThreadPoolExecutor threadPoolExecutor = new ThreadPoolExecutor(
         1, 1, 3, SECONDS,

@@ -3,33 +3,33 @@ package dev.danoak.pollers;
 import lombok.extern.slf4j.Slf4j;
 
 import java.util.Optional;
-import java.util.concurrent.*;
-
-import static java.util.concurrent.TimeUnit.SECONDS;
+import java.util.concurrent.Callable;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
+import java.util.concurrent.atomic.AtomicReference;
 
 @SuppressWarnings("Duplicates")
 @Slf4j
-public class ParameterizedPoller<Result> {
-
-    private final BlockingQueue<Result> resultQueue = new ArrayBlockingQueue<>(1, true);
-
-    private final ThreadPoolExecutor threadPoolExecutor = new ThreadPoolExecutor(
-        1, 1, 3, SECONDS,
-        new ArrayBlockingQueue<>(1, true));
+public class ThreadPoller<Result> {
 
     public Optional<Result> poll(Callable<Optional<Result>> pollee,
                                  long period, TimeUnit periodTimeUnit,
                                  long timeout, TimeUnit timeoutTimeUnit) {
-        threadPoolExecutor.submit(() -> {
+        AtomicReference<Optional<Result>> resultRef = new AtomicReference<>();
+        Thread poller = new Thread(() -> {
             try {
                 boolean done = false;
+                long startMs = System.currentTimeMillis();
+                long timeoutMs = TimeUnit.MILLISECONDS.convert(timeout, timeoutTimeUnit);
                 while (!done) {
-                    final Optional<Result> resultOpt = pollee.call();
-                    if (resultOpt.isPresent()) {
-                        final Result result = resultOpt.get();
-                        resultQueue.put(result);
+                    if (System.currentTimeMillis() - startMs > timeoutMs) {
+                        throw new TimeoutException("Polling timed out");
+                    }
+                    Optional<Result> result = pollee.call();
+                    if (result.isPresent()) {
+                        resultRef.set(result);
                         done = true;
-                        log.info("Polling finished. Got: {}", result);
+                        log.info("Polling finished");
                     } else {
                         periodTimeUnit.sleep(period);
                         done = false;
@@ -42,18 +42,14 @@ public class ParameterizedPoller<Result> {
                 log.error("Polling error", e);
             }
         });
+        poller.start();
         log.info("Started with period of {} {}", period, periodTimeUnit);
-        final Result result;
         try {
-            result = resultQueue.poll(timeout, timeoutTimeUnit);
-            if (result == null) {
-                log.error("Poller timed out");
-            }
-            return Optional.ofNullable(result);
+            poller.join();
         } catch (InterruptedException e) {
-            log.error("Polling error", e);
-            return Optional.empty();
+            log.error("Interrupted polling", e);
         }
+        return resultRef.get();
     }
 
 }

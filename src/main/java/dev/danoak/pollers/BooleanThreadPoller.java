@@ -2,29 +2,30 @@ package dev.danoak.pollers;
 
 import lombok.extern.slf4j.Slf4j;
 
-import java.util.concurrent.*;
-
-import static java.util.concurrent.TimeUnit.SECONDS;
+import java.util.concurrent.Callable;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
+import java.util.concurrent.atomic.AtomicReference;
 
 @SuppressWarnings("Duplicates")
 @Slf4j
-public class BooleanPoller {
-
-    private final BlockingQueue<Boolean> resultQueue = new ArrayBlockingQueue<>(1, true);
-
-    private final ThreadPoolExecutor threadPoolExecutor = new ThreadPoolExecutor(
-        1, 1, 3, SECONDS,
-        new ArrayBlockingQueue<>(1, true));
+public class BooleanThreadPoller {
 
     public Boolean poll(Callable<Boolean> pollee,
                         long period, TimeUnit periodTimeUnit,
                         long timeout, TimeUnit timeoutTimeUnit) {
-        threadPoolExecutor.submit(() -> {
+        AtomicReference<Boolean> resultRef = new AtomicReference<>();
+        Thread poller = new Thread(() -> {
             try {
                 boolean done = false;
+                long startMs = System.currentTimeMillis();
+                long timeoutMs = TimeUnit.MILLISECONDS.convert(timeout, timeoutTimeUnit);
                 while (!done) {
+                    if (System.currentTimeMillis() - startMs > timeoutMs) {
+                        throw new TimeoutException("Polling timed out");
+                    }
                     if (pollee.call()) {
-                        resultQueue.put(true);
+                        resultRef.set(true);
                         done = true;
                         log.info("Polling finished");
                     } else {
@@ -39,18 +40,14 @@ public class BooleanPoller {
                 log.error("Polling error", e);
             }
         });
+        poller.start();
         log.info("Started with period of {} {}", period, periodTimeUnit);
-        final Boolean result;
         try {
-            result = resultQueue.poll(timeout, timeoutTimeUnit);
-            if (result == null) {
-                log.error("Poller timed out");
-            }
-            return result;
+            poller.join();
         } catch (InterruptedException e) {
-            log.error("Polling error", e);
-            return null;
+            log.error("Interrupted polling", e);
         }
+        return resultRef.get();
     }
 
 }

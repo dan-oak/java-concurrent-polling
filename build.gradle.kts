@@ -17,20 +17,25 @@ plugins {
     groovy
 }
 
+val lombokVersion by extra ("1.18.10")
+
 repositories {
     // Use jcenter for resolving your dependencies.
     // You can declare any Maven/Ivy/file repository here.
     jcenter()
+    mavenCentral()
 }
 
 dependencies {
+    // Lombok
+    compileOnly("org.projectlombok:lombok:${extra["lombokVersion"]}")
+    annotationProcessor("org.projectlombok:lombok:${extra["lombokVersion"]}")
+
     // Logging
     implementation("ch.qos.logback:logback-core:1.2.3")
     implementation("ch.qos.logback:logback-classic:1.2.3")
 
-    // Use the latest Groovy version for Spock testing
+    // Spock
     testImplementation("org.codehaus.groovy:groovy-all:2.5.6")
-
-    // Use the awesome Spock testing and specification framework even with Java
     testImplementation("org.spockframework:spock-core:1.2-groovy-2.5")
 }

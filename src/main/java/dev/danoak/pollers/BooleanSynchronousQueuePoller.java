@@ -2,24 +2,21 @@ package dev.danoak.pollers;
 
 import lombok.extern.slf4j.Slf4j;
 
-import java.util.concurrent.*;
-
-import static java.util.concurrent.TimeUnit.SECONDS;
+import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.Callable;
+import java.util.concurrent.SynchronousQueue;
+import java.util.concurrent.TimeUnit;
 
 @SuppressWarnings("Duplicates")
 @Slf4j
-public class BooleanPoller {
+public class BooleanSynchronousQueuePoller {
 
-    private final BlockingQueue<Boolean> resultQueue = new ArrayBlockingQueue<>(1, true);
-
-    private final ThreadPoolExecutor threadPoolExecutor = new ThreadPoolExecutor(
-        1, 1, 3, SECONDS,
-        new ArrayBlockingQueue<>(1, true));
+    private final BlockingQueue<Boolean> resultQueue = new SynchronousQueue<>();
 
     public Boolean poll(Callable<Boolean> pollee,
                         long period, TimeUnit periodTimeUnit,
                         long timeout, TimeUnit timeoutTimeUnit) {
-        threadPoolExecutor.submit(() -> {
+        new Thread(() -> {
             try {
                 boolean done = false;
                 while (!done) {
@@ -38,7 +35,7 @@ public class BooleanPoller {
             } catch (Exception e) {
                 log.error("Polling error", e);
             }
-        });
+        }).start();
         log.info("Started with period of {} {}", period, periodTimeUnit);
         final Boolean result;
         try {
