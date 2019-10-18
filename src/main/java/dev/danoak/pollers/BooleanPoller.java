@@ -12,7 +12,7 @@ public class BooleanPoller {
 
     private final Logger log = LoggerFactory.getLogger(this.getClass().getName());
 
-    private final BlockingQueue<Boolean> workingQueue = new ArrayBlockingQueue<>(1, true);
+    private final BlockingQueue<Boolean> resultQueue = new ArrayBlockingQueue<>(1, true);
 
     private final ThreadPoolExecutor threadPoolExecutor = new ThreadPoolExecutor(
         1, 1, 3, SECONDS,
@@ -26,7 +26,7 @@ public class BooleanPoller {
                 boolean done = false;
                 while (!done) {
                     if (pollee.call()) {
-                        workingQueue.put(true);
+                        resultQueue.put(true);
                         done = true;
                         log.info("Polling finished");
                     } else {
@@ -44,7 +44,7 @@ public class BooleanPoller {
         log.info("Started with period of {} {}", period, periodTimeUnit);
         final Boolean result;
         try {
-            result = workingQueue.poll(timeout, timeoutTimeUnit);
+            result = resultQueue.poll(timeout, timeoutTimeUnit);
             if (result == null) {
                 log.error("Poller timed out");
             }

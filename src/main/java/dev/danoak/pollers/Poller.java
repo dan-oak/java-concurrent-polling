@@ -7,11 +7,12 @@ import org.slf4j.LoggerFactory;
 import java.util.Optional;
 import java.util.concurrent.*;
 
+@SuppressWarnings("DuplicatedCode")
 public class Poller<Result> {
 
     private final Logger log = LoggerFactory.getLogger(this.getClass().getName());
 
-    private final BlockingQueue<Result> workingQueue = new ArrayBlockingQueue<>(1, true);
+    private final BlockingQueue<Result> resultQueue = new ArrayBlockingQueue<>(1, true);
 
     private final ScheduledThreadPoolExecutor threadPoolExecutor = new ScheduledThreadPoolExecutor(1);
 
@@ -43,7 +44,7 @@ public class Poller<Result> {
 
     private Result get(int timeout, TimeUnit timeoutTimeUnit) {
         try {
-            return workingQueue.poll(timeout, timeoutTimeUnit);
+            return resultQueue.poll(timeout, timeoutTimeUnit);
         } catch (InterruptedException e) {
             log.error("Polling error", e);
             return null;
@@ -54,7 +55,7 @@ public class Poller<Result> {
 
     private void put(Result result) {
         try {
-            workingQueue.put(result);
+            resultQueue.put(result);
         } catch (InterruptedException e) {
             log.error("Polling error", e);
         } finally {

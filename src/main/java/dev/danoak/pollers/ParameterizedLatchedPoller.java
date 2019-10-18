@@ -9,6 +9,7 @@ import java.util.concurrent.atomic.AtomicReference;
 
 import static java.util.concurrent.TimeUnit.SECONDS;
 
+@SuppressWarnings("DuplicatedCode")
 public class ParameterizedLatchedPoller<Result> {
 
     private final Logger log = LoggerFactory.getLogger(this.getClass().getName());

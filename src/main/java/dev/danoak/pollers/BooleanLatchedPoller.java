@@ -7,6 +7,7 @@ import java.util.concurrent.*;
 
 import static java.util.concurrent.TimeUnit.SECONDS;
 
+@SuppressWarnings("DuplicatedCode")
 public class BooleanLatchedPoller {
 
     private final Logger log = LoggerFactory.getLogger(this.getClass().getName());

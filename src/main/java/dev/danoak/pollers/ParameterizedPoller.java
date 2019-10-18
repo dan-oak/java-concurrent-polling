@@ -13,7 +13,7 @@ public class ParameterizedPoller<Result> {
 
     private final Logger log = LoggerFactory.getLogger(this.getClass().getName());
 
-    private final BlockingQueue<Result> workingQueue = new ArrayBlockingQueue<>(1, true);
+    private final BlockingQueue<Result> resultQueue = new ArrayBlockingQueue<>(1, true);
 
     private final ThreadPoolExecutor threadPoolExecutor = new ThreadPoolExecutor(
         1, 1, 3, SECONDS,
@@ -29,7 +29,7 @@ public class ParameterizedPoller<Result> {
                     final Optional<Result> resultOpt = pollee.call();
                     if (resultOpt.isPresent()) {
                         final Result result = resultOpt.get();
-                        workingQueue.put(result);
+                        resultQueue.put(result);
                         done = true;
                         log.info("Polling finished. Got: {}", result);
                     } else {
@@ -47,7 +47,7 @@ public class ParameterizedPoller<Result> {
         log.info("Started with period of {} {}", period, periodTimeUnit);
         final Result result;
         try {
-            result = workingQueue.poll(timeout, timeoutTimeUnit);
+            result = resultQueue.poll(timeout, timeoutTimeUnit);
             if (result == null) {
                 log.error("Poller timed out");
             }
