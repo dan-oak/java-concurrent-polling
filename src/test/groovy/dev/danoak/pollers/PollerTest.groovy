@@ -11,9 +11,9 @@ class PollerTest extends Test {
 
     def poller = new Poller()
 
-    def pollForDivisibleBy4(Repository<Number> repo) throws InterruptedException {
+    def <T> Optional<T> pollForIsDivisibleBy(Repository<T> repo, T n) throws InterruptedException {
         def pollee = {
-            repo.findFirst({ isDivisibleBy(it, 4) })
+            repo.findFirst({ isDivisibleBy(it, n) })
         }
         return poller.poll(pollee, 1, SECONDS, 5, SECONDS)
     }
@@ -25,7 +25,7 @@ class PollerTest extends Test {
             rng.start(1, 1, SECONDS)
 
         expect:
-            pollForDivisibleBy4(repo)
+            pollForIsDivisibleBy(repo, 4)
                 .map({ log.info("Found: {}", it); it })
                 .isPresent()
 

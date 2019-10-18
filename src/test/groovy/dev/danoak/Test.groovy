@@ -7,7 +7,7 @@ abstract class Test extends Specification {
 
     def log = LoggerFactory.getLogger(this.getClass().getName())
 
-    def isDivisibleBy(Number n, Number d) {
+    def <T> Boolean isDivisibleBy(T n, T d) {
         return n % d == 0
     }
 

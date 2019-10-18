@@ -11,9 +11,9 @@ class BooleanPollerTest extends Test {
 
     def poller = new BooleanPoller()
 
-    def pollForDivisibleBy4IsPresent(Repository<Number> repo) throws InterruptedException {
+    def <T> Boolean pollForIsDivisibleByIsPresent(Repository<Number> repo, T n) throws InterruptedException {
         def pollee = {
-            repo.findFirst({ isDivisibleBy(it, 4) })
+            repo.findFirst({ isDivisibleBy(it, n) })
                 .map({ log.info("Found: {}", it); it })
                 .isPresent()
         }
@@ -27,7 +27,7 @@ class BooleanPollerTest extends Test {
             rng.start(1, 1, SECONDS)
 
         expect:
-            pollForDivisibleBy4IsPresent(repo)
+            pollForIsDivisibleByIsPresent(repo, 4)
 
         cleanup:
             rng.stop()
