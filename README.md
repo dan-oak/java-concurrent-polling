@@ -130,10 +130,9 @@ The only problem is that the scheduled task never stops. To solve it we just use
 set results from the scheduler, and wait for them on the main thread. When we got a result or timed out, the task is
 stopped.
 
-That's it.
+That's it for now.
 
-Regards,
-
+Regards,  
 Dan
 
 ## References
