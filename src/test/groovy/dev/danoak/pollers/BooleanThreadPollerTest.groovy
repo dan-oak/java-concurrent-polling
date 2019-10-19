@@ -20,7 +20,7 @@ class BooleanThreadPollerTest extends Test {
         return poller.poll(pollee, 1, SECONDS, 5, SECONDS)
     }
 
-    def "boolean synchronized threads poller"() {
+    def "boolean thread poller"() {
         given:
             def repo = new ListRepository<Integer>()
             def rng = new RandomIntegerPersister(repo)

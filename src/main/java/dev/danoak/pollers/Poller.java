@@ -44,8 +44,7 @@ public class Poller<Answer> {
     ) throws InterruptedException, ExecutionException, TimeoutException {
         AtomicReference<Optional<Answer>> resultRef = new AtomicReference<>(Optional.empty());
         QuestionRunnable questionRunnable = new QuestionRunnable(question, resultRef);
-        ScheduledFuture<?> scheduledFuture = Executors
-            .newSingleThreadScheduledExecutor()
+        ScheduledFuture<?> scheduledFuture = Executors.newSingleThreadScheduledExecutor()
             .scheduleAtFixedRate(questionRunnable, 0, period, periodTimeUnit);
         questionRunnable.bind(scheduledFuture);
         scheduledFuture.get(timeout, timeoutTimeUnit);

@@ -17,20 +17,18 @@ public class BooleanThreadPoller {
         AtomicReference<Boolean> resultRef = new AtomicReference<>();
         Thread poller = new Thread(() -> {
             try {
-                boolean done = false;
                 long startMs = System.currentTimeMillis();
                 long timeoutMs = TimeUnit.MILLISECONDS.convert(timeout, timeoutTimeUnit);
-                while (!done) {
+                while (true) {
                     if (System.currentTimeMillis() - startMs > timeoutMs) {
                         throw new TimeoutException("Polling timed out");
                     }
                     if (pollee.call()) {
                         resultRef.set(true);
-                        done = true;
                         log.info("Polling finished");
+                        return;
                     } else {
                         periodTimeUnit.sleep(period);
-                        done = false;
                         log.info("Polling continues");
                     }
                 }
